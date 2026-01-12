@@ -1,0 +1,64 @@
+{
+  "settings": {
+    "date": "12.01.2026",
+    "week": "week2",
+    "day": "day1"
+  },
+  "week1": {
+    "day1": {
+      "1": {"name": "Біологія і екологія", "link": "https://meet.google.com/sfc-tgbt-roc"},
+      "2": {"name": "Фізика та астрономія", "link": "https://meet.google.com/vxn-vtwy-ndi"},
+      "3": {"name": "Історія: Україна і світ", "link": "https://meet.google.com/cws-hhzu-nez"},
+      "4": {"name": "Фізична культура", "link": "https://meet.google.com/vwy-dswx-ehy"}
+    },
+    "day2": {
+      "1": {"name": "Хімія", "link": "https://meet.google.com/cnj-owwi-eyc"},
+      "2": {"name": "Захист України", "link": "https://meet.google.com/bxs-wvbg-nxu"},
+      "3": {"name": "Українська мова", "link": "https://meet.google.com/mck-vpyc-wyk"},
+      "4": {"name": "Захист України (МП)", "link": "https://meet.google.com/bxs-wvbg-nxu"}
+    },
+    "day3": {
+      "2": {"name": "Іноземна мова", "link": "https://meet.google.com/mrv-vqjb-csy"},
+      "3": {"name": "Зарубіжна література", "link": "https://meet.google.com/hgv-offr-yvb"}
+    },
+    "day4": {
+      "1": {"name": "Біологія і екологія", "link": "https://meet.google.com/sfc-tgbt-roc"},
+      "2": {"name": "Інформатика", "link": "https://meet.google.com/nrh-dhdg-myo"},
+      "3": {"name": "Географія", "link": "https://meet.google.com/xfi-zkba-mco"}
+    },
+    "day5": {
+      "1": {"name": "Інформатика", "link": "https://meet.google.com/nrh-dhdg-myo"},
+      "2": {"name": "Українська література", "link": "https://meet.google.com/sxu-otmd-nwt"},
+      "3": {"name": "Математика", "link": "https://meet.google.com/qki-umti-riq"}
+    }
+  },
+  "week2": {
+    "day1": {
+      "1": {"name": "Хімія", "link": "https://meet.google.com/cnj-owwi-eyc"},
+      "2": {"name": "Фізика та астрономія", "link": "https://meet.google.com/vxn-vtwy-ndi"},
+      "3": {"name": "Історія: Україна і світ", "link": "https://meet.google.com/cws-hhzu-nez"},
+      "4": {"name": "Фізична культура", "link": "https://meet.google.com/vwy-dswx-ehy"}
+    },
+    "day2": {
+      "1": {"name": "Хімія", "link": "https://meet.google.com/cnj-owwi-eyc"},
+      "2": {"name": "Захист України", "link": "https://meet.google.com/bxs-wvbg-nxu"},
+      "3": {"name": "Українська мова", "link": "https://meet.google.com/mck-vpyc-wyk"}
+    },
+    "day3": {
+      "1": {"name": "Історія: Україна і світ", "link": "https://meet.google.com/cws-hhzu-nez"},
+      "2": {"name": "Іноземна мова", "link": "https://meet.google.com/mrv-vqjb-csy"},
+      "3": {"name": "Зарубіжна література", "link": "https://meet.google.com/hgv-offr-yvb"}
+    },
+    "day4": {
+      "1": {"name": "Біологія і екологія", "link": "https://meet.google.com/sfc-tgbt-roc"},
+      "2": {"name": "Інформатика", "link": "https://meet.google.com/nrh-dhdg-myo"},
+      "3": {"name": "Географія", "link": "https://meet.google.com/xfi-zkba-mco"}
+    },
+    "day5": {
+      "1": {"name": "Інформатика", "link": "https://meet.google.com/nrh-dhdg-myo"},
+      "2": {"name": "Українська література", "link": "https://meet.google.com/sxu-otmd-nwt"},
+      "3": {"name": "Математика", "link": "https://meet.google.com/qki-umti-riq"}
+    }
+  }
+}
+
