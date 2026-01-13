@@ -1,0 +1,28 @@
+# Before using this file in project, rename it:
+#  COPY HERE -->> config.yaml <<-- COPY HERE
+
+settings:
+
+  subjects:
+
+    # The "None" uuid is not working !!! This is reserved uuid for skip
+
+    - name: Physics
+      link: google.com
+      uuid: Ph
+    - name: Biology
+      link: github.com
+      uuid: B
+
+
+  schedule:
+
+    - # Week
+      - # Day
+        - B # Subject
+        - Ph
+        - None # A None string will be skipped
+        - B
+        # ...
+      # ...
+    # ...

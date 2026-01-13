@@ -8,7 +8,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.config import tok
-from app.hndlr import rout
+from app.handler import rout
 from app.server import rs
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
@@ -18,11 +18,12 @@ dp = Dispatcher(storage=MemoryStorage())
 
 dp.include_router(rout)
 
-# start
+
 async def main():
     await rs()
     logging.info("start!!!")
     await dp.start_polling(bot)
+
 
 if __name__ == '__main__':
     try:

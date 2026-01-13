@@ -1,0 +1,98 @@
+settings:
+
+  subjects:
+
+    - name: Фізика та астрономія
+      link: https://meet.google.com/vxn-vtwy-ndi
+      uuid: Ph
+
+    - name: Інформатика
+      link: https://meet.google.com/nrh-dhdg-myo
+      uuid: I
+
+    - name: Математика
+      link: https://meet.google.com/qki-umti-riq
+      uuid: M
+
+    - name: Зарубіжна література
+      link: https://meet.google.com/hgv-offr-yvb
+      uuid: FLi
+
+    - name: Фізична культура
+      link: https://meet.google.com/vwy-dswx-ehy
+      uuid: PE
+
+    - name: Захист України
+      link: https://meet.google.com/vwy-dswx-ehy
+      uuid: DoU
+
+    - name: Захист України (МП)
+      link: https://meet.google.com/bxs-wvbg-nxu
+      uuid: DoU2
+
+    - name: "Історія: Україна і світ"
+      link: https://meet.google.com/cws-hhzu-nez
+      uuid: H
+
+    - name: Українська література
+      link: https://meet.google.com/sxu-otmd-nwt
+      uuid: ULi
+
+    - name: Українська мова
+      link: https://meet.google.com/mck-vpyc-wyk
+      uuid: ULa
+
+    - name: Хімія
+      link: https://meet.google.com/cnj-owwi-eyc
+      uuid: Ch
+
+    - name: Іноземна мова
+      link: https://meet.google.com/mrv-vqjb-csy
+      uuid: FLa
+
+    - name: Географія
+      link: https://meet.google.com/xfi-zkba-mco
+      uuid: G
+
+    - name: Біологія і екологія
+      link: https://meet.google.com/sfc-tgbt-roc
+      uuid: B
+
+
+  schedule:
+
+    -
+      - - B
+        - Ph
+        - H
+        - PE
+      - - Ch
+        - DoU
+        - UL
+        - DoU2
+      - - None
+        - FLa
+        - FLi
+      - - B
+        - I
+        - G
+      - - I
+        - ULi
+        - M
+    -
+      - - Ch
+        - Ph
+        - H
+        - PE
+      - - Ch
+        - DoU
+        - ULa
+      - - H
+        - FLa
+        - FLi
+      - - B
+        - I
+        - G
+      - - I
+        - ULi
+        - M
