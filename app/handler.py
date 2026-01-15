@@ -15,6 +15,13 @@ from app.utils import create_msg
 rout = Router()
 
 
+@rout.message(Command('reload'))
+async def reload_config(msg: types.Message, config: Config):
+    if msg.from_user.id in config.settings.admins:
+        config.reload()
+        await msg.answer("Config reloaded")
+
+
 @rout.message(Command("start"))
 async def start(msg: types.Message, state: FSMContext, config: Config):
     await state.set_state(Mode.main)
