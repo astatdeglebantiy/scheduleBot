@@ -45,7 +45,7 @@ async def create_msg(config: Config, day_idx: int, target_date: datetime = None,
 
         if subject_obj:
             
-            row = f"<b>{i + 1}. [{lesson_time}] <a href='{subject_obj.link}'>{subject_obj.name}</a></b>"
+            row = f"<b>{i + 1}. [{lesson_time}] <a href='{subject_obj.link}'>{subject_obj.name}</a></b> {f'<i>авд.{subject_obj.audience}</i>' if subject_obj.audience else ''}"
             lesson_rows.append(row)
 
 

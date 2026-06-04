@@ -4,13 +4,15 @@ import urllib.request
 import pytz
 import yaml
 from pathlib import Path
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, Field
 from typing import Dict, List, Optional, Union
 from datetime import datetime
 
 class Subject(BaseModel):
     name: str
     link: str
+    audience: str | int | None = Field(default=None)
+
 
 
 

@@ -129,9 +129,9 @@ async def start(msg: types.Message, state: FSMContext, config: Config, command: 
         f"<blockquote>"
         f"<tg-emoji emoji-id='5366288132834599020'>🛠</tg-emoji> Dev: @RTCET\n\n"
         f"<tg-emoji emoji-id='5317028762074750983'>💻</tg-emoji><tg-emoji emoji-id='5318827507263217597'>💻</tg-emoji> Contributor: @astatf"
+        f"<tg-emoji emoji-id='5294325496228620537'>❓</tg-emoji> Якщо розклад змінився, надішліть пулл-реквест з оновленим конфігом <a href='https://github.com/rtplugate-hub/SRooT'>сюди</a>"
         f"</blockquote>\n\n"
     )
-    #МОжливо потім додати: <tg-emoji emoji-id='5294325496228620537'>❓</tg-emoji> Якщо розклад змінився, надішліть пулл-реквест з оновленим конфігом <a href='https://github.com/rtplugate-hub/SRooT'>сюди</a>
 
     await msg.answer(start_text, parse_mode="HTML", disable_web_page_preview=True)
     await show_menu(msg, state, config)
