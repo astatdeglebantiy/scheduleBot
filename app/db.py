@@ -1,67 +1,43 @@
 import datetime
-import os
-from dotenv import load_dotenv
-from supabase import create_client, Client
+import sqlite3
 
-load_dotenv()
+def get_db_connection():
+    conn = sqlite3.connect('scheduleBot.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
-sbUrl = os.getenv('SUPABASE_URL')
-sbKey = os.getenv('SUPABASE_KEY')
-
-if not sbUrl or not sbKey:
-    raise ValueError("SUPABASE_URL or SUPABASE_KEY err")
-
-
-sb: Client = create_client(sbUrl, sbKey)
-
-
-
+def init_db():
+    conn = get_db_connection()
+    conn.execute('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, username TEXT, first_name TEXT, last_active TEXT)')
+    conn.commit()
+    conn.close()
 
 def updUser(user):
-    data = {
-        "user_id": user.id,
-        "username": user.username,
-        "first_name": user.first_name,
-        "last_active": datetime.datetime.now().isoformat()
-    }
-    try:
-        sb.table("users").upsert(data).execute()
-    except Exception:
-        pass
-
-
-
-
-
+    conn = get_db_connection()
+    conn.execute('INSERT OR REPLACE INTO users (user_id, username, first_name, last_active) VALUES (?, ?, ?, ?)',
+                 (user.id, user.username, user.first_name, datetime.datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
 
 def get_total_users():
-    try:
-        res = sb.table("users").select("*", count="exact", head=True).execute()
-        return res.count
-    except Exception:
-        return 0
-
-
-
+    conn = get_db_connection()
+    count = conn.execute('SELECT COUNT(*) FROM users').fetchone()[0]
+    conn.close()
+    return count
 
 def get_users_page(page: int, page_size: int = 40):
     start = page * page_size
-    end = start + page_size - 1
-    try:
-        res = sb.table("users").select("*").order("last_active", desc=True).range(start, end).execute()
-        return res.data
-    except Exception:
-        return []
-
-
-
-
+    conn = get_db_connection()
+    users = conn.execute('SELECT * FROM users ORDER BY last_active DESC LIMIT ? OFFSET ?', (page_size, start)).fetchall()
+    conn.close()
+    return [dict(user) for user in users]
 
 def get_user_by_id(user_id: int):
-    try:
-        res = sb.table("users").select("*").eq("user_id", user_id).execute()
-        if res.data:
-            return res.data[0]
-        return None
-    except Exception:
-        return None
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE user_id = ?', (user_id,)).fetchone()
+    conn.close()
+    if user:
+        return dict(user)
+    return None
+
+init_db()

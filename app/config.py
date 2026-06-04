@@ -3,10 +3,12 @@ import os
 import urllib.request
 import pytz
 import yaml
-from pathlib import Path
 from pydantic import BaseModel, model_validator, Field
 from typing import Dict, List, Optional, Union
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Subject(BaseModel):
     name: str
