@@ -24,6 +24,11 @@ dp.include_router(rout)
 async def main():
     await rs()
     logging.info("Bot started")
+    
+    from app.alerts import alertMonitorTask
+    asyncio.create_task(alertMonitorTask(bot, config))
+    logging.info("Alert monitor started")
+    
     await dp.start_polling(bot, config=config)
 
 if __name__ == '__main__':

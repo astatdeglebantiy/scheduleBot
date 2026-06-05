@@ -1,9 +1,11 @@
 import logging
 import os
+import time
 import urllib.request
 import pytz
 import yaml
-from pydantic import BaseModel, model_validator, Field
+from pathlib import Path
+from pydantic import BaseModel, model_validator
 from typing import Dict, List, Optional, Union
 from datetime import datetime
 from dotenv import load_dotenv
@@ -13,8 +15,7 @@ load_dotenv()
 class Subject(BaseModel):
     name: str
     link: str
-    audience: str | int | None = Field(default=None)
-
+    audience: str | int | None = None
 
 
 
@@ -25,12 +26,21 @@ class AcademicContext(BaseModel):
 
 
 
+class SaturdayRef(BaseModel):
+    week: int
+    day: int
+
 class ConfigSchema(BaseModel):
     subjects: Dict[str, Subject]
     schedule: List[Dict[int, List[Optional[Union[str, Subject]]]]]
+    saturday_schedule: Optional[Dict[str, SaturdayRef]] = None
     time: List[str]
     admins: List[int]
     academic_context: AcademicContext
+
+
+    app_version: str = "0.0.0"
+    whats_new_text: str = ""
 
     @model_validator(mode='after')
     def map_subjects(self):
@@ -60,6 +70,7 @@ class RootConfig(BaseModel):
 
 class Config:
     def __init__(self):
+        self.revision: int = 0
         self.days: List[str] = [
             "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота", "Неділя"
         ]
@@ -67,7 +78,9 @@ class Config:
         self.settings = None
         self.bot_token = os.getenv('BOT_TOKEN')
         self.config_url = os.getenv('CONFIG_URL')
-        
+        self.alert_api_url = os.getenv('ALERT_API_URL')
+        self.alert_check_interval = int(os.getenv('ALERT_CHECK_INTERVAL', '30'))
+
         if not self.bot_token:
             raise ValueError("BOT_TOKEN not set")
         if not self.config_url:
@@ -80,12 +93,25 @@ class Config:
 
     def load(self):
         try:
-            with urllib.request.urlopen(self.config_url) as response:
-                raw_data = yaml.safe_load(response)
-                
-            root = RootConfig(**raw_data)
+            if self.config_url == "local":
+                configPath = Path(__file__).parent.parent / "config.yaml"
+                with open(configPath, 'r', encoding='utf-8') as f:
+                    rawData = yaml.safe_load(f)
+                logging.info("Config loaded from local file")
+            else:
+                cache_buster = f"?_t={int(time.time())}"
+                url = self.config_url + cache_buster
+                req = urllib.request.Request(
+                    url,
+                    headers={"Cache-Control": "no-cache", "Pragma": "no-cache"},
+                )
+                with urllib.request.urlopen(req) as response:
+                    rawData = yaml.safe_load(response)
+                logging.info("Config loaded from URL")
+
+            root = RootConfig(**rawData)
             self.settings = root.settings
-            logging.info("Config loaded from URL")
+            self.revision += 1
         except Exception as e:
             logging.error(f"Failed to load config: {e}")
             raise e
@@ -132,3 +158,27 @@ class Config:
         
         week_schedule = self.settings.schedule[week_idx]
         return week_schedule.get(day_idx + 1)
+
+    def getNextSaturday(self) -> Optional[tuple[str, int, int]]:
+        if not self.settings.saturday_schedule:
+            return None
+
+        now = datetime.now(self.tz)
+        today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        satDates = []
+        for dateStr in self.settings.saturday_schedule.keys():
+            try:
+                satDate = self.tz.localize(datetime.strptime(dateStr, "%d.%m.%Y"))
+                if satDate >= today:
+                    satDates.append((satDate, dateStr))
+            except ValueError:
+                continue
+
+        if not satDates:
+            return None
+
+        satDates.sort(key=lambda x: x[0])
+        nextSatDateStr = satDates[0][1]
+        satRef = self.settings.saturday_schedule[nextSatDateStr]
+        return (nextSatDateStr, satRef.week, satRef.day)

@@ -1,54 +1,157 @@
+from typing import Any
+
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
-def get_keyboard(config, viewing_week: int) -> ReplyKeyboardMarkup:
-    builder = ReplyKeyboardBuilder()
-    builder.add(KeyboardButton(text="Сьогодні"), KeyboardButton(text="Завтра"))
+class ColoredInlineKeyboardButton(InlineKeyboardButton):
+    style: str | None = None
 
-    days_with_schedule = []
-    week_schedule = config.settings.schedule[viewing_week - 1]
 
-    for day_idx, day_name in enumerate(config.days):
-        day_key = day_idx + 1
-        day_lessons = week_schedule.get(day_key)
-        if day_lessons and any(lesson is not None for lesson in day_lessons):
-            days_with_schedule.append(day_name)
+class ColoredKeyboardButton(KeyboardButton):
+    style: str | None = None
 
-    for day in days_with_schedule:
-        builder.add(KeyboardButton(text=day))
 
-    builder.add(
-        KeyboardButton(text="← Тиждень →")
-    )
+class ColoredInlineKeyboardMarkup(InlineKeyboardMarkup):
+    def model_dump(self, *args, **kwargs):
+        kwargs.setdefault("serialize_as_any", True)
+        return super().model_dump(*args, **kwargs)
 
-    sizes = [2]
-    num_day_buttons = len(days_with_schedule)
-    if num_day_buttons > 0:
-        sizes.extend([2] * (num_day_buttons // 2))
-        if num_day_buttons % 2 == 1:
-            sizes.append(1)
-    sizes.append(1)
-    builder.adjust(*sizes)
-
-    return builder.as_markup(resize_keyboard=True)
+    def model_dump_json(self, *args, **kwargs):
+        kwargs.setdefault("serialize_as_any", True)
+        return super().model_dump_json(*args, **kwargs)
 
 
 
 
 
+class ColoredReplyKeyboardMarkup(ReplyKeyboardMarkup):
+    def model_dump(self, *args, **kwargs):
+        kwargs.setdefault("serialize_as_any", True)
+        return super().model_dump(*args, **kwargs)
 
 
-def get_stat_pagination_kb(current_page: int, total_pages: int) -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    
+    def model_dump_json(self, *args, **kwargs):
+        kwargs.setdefault("serialize_as_any", True)
+        return super().model_dump_json(*args, **kwargs)
+
+
+
+
+
+def _chunk(items: list, size: int) -> list[list]:
+    return [items[i : i + size] for i in range(0, len(items), size)]
+
+
+
+
+
+def getNextLessonInlineKb(alertEnabled: bool = True) -> Any:
+    alertStatus = "увімк" if alertEnabled else "вимк"
+    return {
+        "inline_keyboard": [
+            [
+                {
+                    "text": f"Повітряна тривога | {alertStatus}",
+                    "callback_data": "alert_toggle",
+                    "style": "success" if alertEnabled else "danger",
+                }
+            ],
+            [
+                {
+                    "text": "Наступна пара",
+                    "callback_data": "next_lesson",
+                    "style": "primary",
+                }
+            ],
+            [
+                {
+                    "text": "Розклад по даті",
+                    "callback_data": "schedule_by_date",
+                    "style": "danger",
+                }
+            ],
+        ]
+    }
+
+
+
+
+
+
+
+def getAlertToggleKb(enabled: bool) -> Any:
+    if enabled:
+        btn = {
+            "text": "Вимкнути сповіщення",
+            "callback_data": "alert_disable",
+            "style": "danger",
+        }
+    else:
+        btn = {
+            "text": "Увімкнути сповіщення",
+            "callback_data": "alert_enable",
+            "style": "success",
+        }
+    return {"inline_keyboard": [[btn]]}
+
+
+
+
+def getSubjectsInlineKb(config) -> Any:
+    buttons = []
+    for subjectKey, subjectObj in config.settings.subjects.items():
+        buttons.append({"text": subjectObj.name, "callback_data": f"next_{subjectKey}"})
+    return {"inline_keyboard": _chunk(buttons, 2)}
+
+
+
+
+
+def get_keyboard(config, viewing_week: int) -> Any:
+    hasSaturday = config.getNextSaturday() is not None
+
+    first_row = [
+        {"text": "Сьогодні", "style": "primary"},
+        {"text": "Завтра", "style": "success"},
+    ]
+    if hasSaturday:
+        first_row.append({"text": "Субота", "style": "danger"})
+
+    daysWithSchedule = []
+    weekSchedule = config.settings.schedule[viewing_week - 1]
+
+    for dayIdx, dayName in enumerate(config.days):
+        dayKey = dayIdx + 1
+        dayLessons = weekSchedule.get(dayKey)
+        if dayLessons and any(lesson is not None for lesson in dayLessons):
+            daysWithSchedule.append(dayName)
+
+    day_buttons = [{"text": day} for day in daysWithSchedule]
+    day_rows = []
+    if day_buttons:
+        pairs = len(day_buttons) // 2
+        day_rows.extend(_chunk(day_buttons[: pairs * 2], 2))
+        if len(day_buttons) % 2 == 1:
+            day_rows.append([day_buttons[-1]])
+
+    keyboard = [first_row, *day_rows, [{"text": "← Тиждень →"}]]
+    return {"keyboard": keyboard, "resize_keyboard": True}
+
+
+
+
+
+
+
+
+
+def get_stat_pagination_kb(current_page: int, total_pages: int) -> Any:
     buttons = []
     if current_page > 0:
-        buttons.append(InlineKeyboardButton(text="<", callback_data=f"stat_page_{current_page - 1}"))
+        buttons.append({"text": "<", "callback_data": f"stat_page_{current_page - 1}"})
     
-    buttons.append(InlineKeyboardButton(text=f"{current_page + 1}/{total_pages}", callback_data="noop"))
+    buttons.append({"text": f"{current_page + 1}/{total_pages}", "callback_data": "noop"})
     
     if current_page < total_pages - 1:
-        buttons.append(InlineKeyboardButton(text=">", callback_data=f"stat_page_{current_page + 1}"))
+        buttons.append({"text": ">", "callback_data": f"stat_page_{current_page + 1}"})
         
-    builder.row(*buttons)
-    return builder.as_markup()
+    return {"inline_keyboard": [buttons]}
