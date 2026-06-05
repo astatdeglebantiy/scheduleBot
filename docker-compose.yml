@@ -1,0 +1,9 @@
+services:
+  schedulebot:
+    build: .
+    restart: always
+    container_name: schedule_bot
+    env_file:
+      - .env
+    volumes:
+      - ./scheduleBot.db:/app/scheduleBot.db

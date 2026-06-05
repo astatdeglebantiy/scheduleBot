@@ -1,0 +1,23 @@
+name: Deploy to Raspberry Pi 5 (Docker)
+
+on:
+  push:
+    branches: [ "readyToCiCd" ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create .env file
+      run: |
+        echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
+        echo "ANOTHER_SECRET=${{ secrets.ANOTHER_SECRET }}" >> .env
+
+    - name: Run Docker Compose
+      run: |
+        docker compose down
+        docker compose up --build -d
