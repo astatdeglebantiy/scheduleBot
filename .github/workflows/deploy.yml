@@ -15,7 +15,7 @@ jobs:
     - name: Create .env file
       run: |
         echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
-        echo "ANOTHER_SECRET=${{ secrets.ANOTHER_SECRET }}" >> .env
+        echo "CONFIG_URL=${{ secrets.CONFIG_URL }}" >> .env
 
     - name: Run Docker Compose
       run: |
