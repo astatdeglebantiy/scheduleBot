@@ -6,4 +6,4 @@ services:
     env_file:
       - .env
     volumes:
-      - ./scheduleBot.db:/app/scheduleBot.db
+      - ./scheduleBot.db:/scheduleBot.db
