@@ -3,6 +3,7 @@ name: Deploy to Raspberry Pi 5 (Docker)
 on:
   push:
     branches: [ "readyToCiCd" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
