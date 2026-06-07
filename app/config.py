@@ -8,6 +8,9 @@ from pathlib import Path
 from pydantic import BaseModel, model_validator
 from typing import Dict, List, Optional, Union
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Subject(BaseModel):
     name: str

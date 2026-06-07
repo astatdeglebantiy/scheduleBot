@@ -1,6 +1,7 @@
-aiogram>=3.0
+python-dotenv
+aiogram
 aiohttp
-pyyaml
+PyYAML
 pydantic
 pytz
 supabase
