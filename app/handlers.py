@@ -24,45 +24,85 @@ REL_BUTTONS = {"Сьогодні": 0, "Завтра": 1, "Субота": -1}
 
 
 
-async def generate_stat_message(bot_username: str, page: int = 0):
+async def generate_stat_message(bot_username: str, page: int = 0, mode: str = "users"):
     limit = 40
-    total_users = get_total_users()
-    total_pages = (total_users + limit - 1) // limit
-    if total_pages == 0: total_pages = 1
-    
-    users = get_users_page(page, limit)
-    
-    txt = f"Всього користувачів: {total_users}\nСторінка: {page + 1}/{total_pages}\n\n"
-    
-    if not users:
-        txt += "Список порожній"
-    
-    for u in users:
-        uid = u.get('user_id')
-        name = u.get('first_name', 'NoName') or 'NoName'
-        if len(name) > 15: name = name[:15] + ".."
-        name = html.escape(name)
-        
-        last_active_str = "?"
-        raw_time = u.get('last_active')
-        if raw_time:
-            try:
-                import pytz
-                dt = datetime.datetime.fromisoformat(raw_time)
-                if dt.tzinfo is None:
-                    dt = pytz.utc.localize(dt).astimezone(pytz.timezone('Europe/Kyiv'))
-                else:
-                    dt = dt.astimezone(pytz.timezone('Europe/Kyiv'))
-                last_active_str = dt.strftime("%d.%m %H:%M")
-            except: pass
 
-        link = f"https://t.me/{bot_username}?start=info_{uid}"
+    if mode == "groups":
+        from app.db import get_total_groups, get_groups_page
+        total_items = get_total_groups()
+        total_pages = (total_items + limit - 1) // limit
+        if total_pages == 0: total_pages = 1
 
-        alertValue = u.get('alert_notifications')
-        alertStatus = str(alertValue)
-        txt += f"• <a href='{link}'>{name}</a> {last_active_str}; {alertStatus}\n"
-    
-    return txt, get_stat_pagination_kb(page, total_pages)
+        items = get_groups_page(page, limit)
+
+        txt = f"Всього груп: {total_items}\nСторінка: {page + 1}/{total_pages}\n\n"
+
+        if not items:
+            txt += "Список порожній"
+
+        for g in items:
+            chat_id = g.get('chat_id')
+            title = g.get('title', 'NoTitle') or 'NoTitle'
+            if len(title) > 20: title = title[:20] + ".."
+            title = html.escape(title)
+
+            last_active_str = "?"
+            raw_time = g.get('last_active')
+            if raw_time:
+                try:
+                    import pytz
+                    dt = datetime.datetime.fromisoformat(raw_time)
+                    if dt.tzinfo is None:
+                        dt = pytz.utc.localize(dt).astimezone(pytz.timezone('Europe/Kyiv'))
+                    else:
+                        dt = dt.astimezone(pytz.timezone('Europe/Kyiv'))
+                    last_active_str = dt.strftime("%d.%m %H:%M")
+                except: pass
+
+            link = f"https://t.me/{bot_username}?start=group_{chat_id}"
+
+            alertValue = g.get('alert_notifications')
+            alertStatus = str(alertValue)
+            txt += f"• <a href='{link}'>{title}</a> {last_active_str}; {alertStatus}\n"
+
+    else:
+        total_users = get_total_users()
+        total_pages = (total_users + limit - 1) // limit
+        if total_pages == 0: total_pages = 1
+
+        users = get_users_page(page, limit)
+
+        txt = f"Всього користувачів: {total_users}\nСторінка: {page + 1}/{total_pages}\n\n"
+
+        if not users:
+            txt += "Список порожній"
+
+        for u in users:
+            uid = u.get('user_id')
+            name = u.get('first_name', 'NoName') or 'NoName'
+            if len(name) > 15: name = name[:15] + ".."
+            name = html.escape(name)
+
+            last_active_str = "?"
+            raw_time = u.get('last_active')
+            if raw_time:
+                try:
+                    import pytz
+                    dt = datetime.datetime.fromisoformat(raw_time)
+                    if dt.tzinfo is None:
+                        dt = pytz.utc.localize(dt).astimezone(pytz.timezone('Europe/Kyiv'))
+                    else:
+                        dt = dt.astimezone(pytz.timezone('Europe/Kyiv'))
+                    last_active_str = dt.strftime("%d.%m %H:%M")
+                except: pass
+
+            link = f"https://t.me/{bot_username}?start=info_{uid}"
+
+            alertValue = u.get('alert_notifications')
+            alertStatus = str(alertValue)
+            txt += f"• <a href='{link}'>{name}</a> {last_active_str}; {alertStatus}\n"
+
+    return txt, get_stat_pagination_kb(page, total_pages, mode)
 
 
 
@@ -83,16 +123,51 @@ async def statCmd(msg: types.Message, config: Config, bot: Bot):
 
 
 
-@rout.callback_query(F.data.startswith("stat_page_"))
-async def stat_pagination(call: CallbackQuery, config: Config, bot: Bot):
+@rout.callback_query(F.data.startswith("stat_users_"))
+async def stat_users_pagination(call: CallbackQuery, config: Config, bot: Bot):
     if call.from_user.id not in config.settings.admins:
         await call.answer()
         return
     page = int(call.data.split("_")[-1])
     bot_info = await bot.get_me()
-    text, kb = await generate_stat_message(bot_info.username, page)
+    text, kb = await generate_stat_message(bot_info.username, page, "users")
     if call.message.html_text != text:
         await call.message.edit_text(text, reply_markup=kb, parse_mode="HTML", disable_web_page_preview=True)
+    await call.answer()
+
+
+@rout.callback_query(F.data.startswith("stat_groups_"))
+async def stat_groups_pagination(call: CallbackQuery, config: Config, bot: Bot):
+    if call.from_user.id not in config.settings.admins:
+        await call.answer()
+        return
+    page = int(call.data.split("_")[-1])
+    bot_info = await bot.get_me()
+    text, kb = await generate_stat_message(bot_info.username, page, "groups")
+    if call.message.html_text != text:
+        await call.message.edit_text(text, reply_markup=kb, parse_mode="HTML", disable_web_page_preview=True)
+    await call.answer()
+
+
+@rout.callback_query(F.data == "stat_switch_groups")
+async def stat_switch_to_groups(call: CallbackQuery, config: Config, bot: Bot):
+    if call.from_user.id not in config.settings.admins:
+        await call.answer()
+        return
+    bot_info = await bot.get_me()
+    text, kb = await generate_stat_message(bot_info.username, 0, "groups")
+    await call.message.edit_text(text, reply_markup=kb, parse_mode="HTML", disable_web_page_preview=True)
+    await call.answer()
+
+
+@rout.callback_query(F.data == "stat_switch_users")
+async def stat_switch_to_users(call: CallbackQuery, config: Config, bot: Bot):
+    if call.from_user.id not in config.settings.admins:
+        await call.answer()
+        return
+    bot_info = await bot.get_me()
+    text, kb = await generate_stat_message(bot_info.username, 0, "users")
+    await call.message.edit_text(text, reply_markup=kb, parse_mode="HTML", disable_web_page_preview=True)
     await call.answer()
 
 
@@ -108,7 +183,7 @@ async def nextLessonCallback(call: CallbackQuery, config: Config):
 async def scheduleByDateCallback(call: CallbackQuery, state: FSMContext):
     from app.state import Mode
     await state.set_state(Mode.waiting_date)
-    await call.message.answer("Введіть дату у форматі РРРР.МM.ДД або ММ.ДД")
+    await call.message.answer("Введіть дату у форматі:\nРРРР.ММ.ДД\nММ.ДД\nДД")
     await call.answer()
 
 
@@ -272,6 +347,38 @@ async def nextSubjectCallback(call: CallbackQuery, config: Config):
 async def start(msg: types.Message, state: FSMContext, config: Config, command: CommandObject):
     args = command.args
 
+    if args and args.startswith("group_") and msg.from_user.id in config.settings.admins:
+        try:
+            from app.db import get_group_by_id
+            target_id = int(args.split("_")[1])
+            g = get_group_by_id(target_id)
+            if not g:
+                await msg.answer("Не знайдено")
+                return
+            la = "Невідомо"
+            if g.get('last_active'):
+                try:
+                    import pytz
+                    dt = datetime.datetime.fromisoformat(g.get('last_active'))
+                    if dt.tzinfo is None:
+                        dt = pytz.utc.localize(dt).astimezone(pytz.timezone('Europe/Kyiv'))
+                    else:
+                        dt = dt.astimezone(pytz.timezone('Europe/Kyiv'))
+                    la = dt.strftime("%d.%m.%Y %H:%M:%S")
+                except: pass
+            title = html.escape(str(g.get('title') or ""))
+            username = html.escape(str(g.get('username') or ""))
+
+            alertValue = g.get('alert_notifications')
+            alertStatus = str(alertValue)
+
+            info = f"ID: <code>{g.get('chat_id')}</code>\nНазва: {title}\nЮзер: @{username}\nАктивність: {la}\nТривога: {alertStatus}"
+            await msg.answer(info, parse_mode="HTML")
+            return
+        except:
+            await msg.answer("Помилка")
+            return
+
     if args and args.startswith("info_") and msg.from_user.id in config.settings.admins:
         try:
             target_id = int(args.split("_")[1])
@@ -310,12 +417,12 @@ async def start(msg: types.Message, state: FSMContext, config: Config, command: 
         f"</blockquote>\n\n"
         f"<tg-emoji emoji-id='5382357040008021292'>🔔</tg-emoji> Версія {config.settings.app_version} - /wn"
     )
-    
+
     from app.state import Mode
     await state.set_state(Mode.main)
     data = await state.get_data()
     viewingWeek = data.get("viewing_week", config.current_week_number)
-    
+
     from app.raw_tg import send_message
 
     if msg.chat.type == "private":
@@ -323,7 +430,7 @@ async def start(msg: types.Message, state: FSMContext, config: Config, command: 
         from app.db import getAlertNotifications
 
         alertEnabled = getAlertNotifications(msg.from_user.id)
-        inlineKb = getNextLessonInlineKb(alertEnabled)
+        inlineKb = getNextLessonInlineKb(alertEnabled, isGroup=False)
         await send_message(
             msg.bot,
             msg.chat.id,
@@ -333,11 +440,15 @@ async def start(msg: types.Message, state: FSMContext, config: Config, command: 
             disable_web_page_preview=True,
         )
     else:
+        from app.keyboard import getNextLessonInlineKb
+
         groupHint = "\n\n<b>Сповіщення для групи:</b> введіть /on або /off"
+        inlineKb = getNextLessonInlineKb(isGroup=True)
         await send_message(
             msg.bot,
             msg.chat.id,
             startText + groupHint,
+            reply_markup=inlineKb,
             parse_mode="HTML",
             disable_web_page_preview=True,
         )
@@ -400,33 +511,44 @@ async def date_input_handler(msg: types.Message, state: FSMContext, config: Conf
 
     date_text = msg.text.strip()
 
+    is_valid_date_format = False
+    target_date = None
+
     try:
         if date_text.count('.') == 2:
             parts = date_text.split('.')
-            if len(parts[0]) == 4:
+            if len(parts[0]) == 4 and parts[0].isdigit() and parts[1].isdigit() and parts[2].isdigit():
                 target_date = datetime.datetime.strptime(date_text, "%Y.%m.%d")
-            else:
-                target_date = datetime.datetime.strptime(date_text, "%d.%m.%Y")
+                is_valid_date_format = True
         elif date_text.count('.') == 1:
-            current_year = datetime.datetime.now(config.tz).year
-            target_date = datetime.datetime.strptime(f"{date_text}.{current_year}", "%m.%d.%Y")
-        else:
-            if current_state == Mode.waiting_date:
-                await state.set_state(Mode.main)
-                await msg.answer("Неправильний формат. Використовуйте РРРР.ММ.ДД або ММ.ДД")
-            return
+            parts = date_text.split('.')
+            if parts[0].isdigit() and parts[1].isdigit():
+                current_year = datetime.datetime.now(config.tz).year
+                target_date = datetime.datetime.strptime(f"{date_text}.{current_year}", "%m.%d.%Y")
+                is_valid_date_format = True
+        elif date_text.count('.') == 0 and date_text.isdigit():
+            day = int(date_text)
+            if 1 <= day <= 31:
+                now = datetime.datetime.now(config.tz)
+                current_year = now.year
+                current_month = now.month
+                target_date = datetime.datetime(current_year, current_month, day)
+                is_valid_date_format = True
+    except ValueError:
+        pass
 
-        await state.set_state(Mode.main)
+    if is_valid_date_format and target_date:
+        if current_state == Mode.waiting_date:
+            await state.set_state(Mode.main)
+
         target_date = config.tz.localize(target_date)
         day_idx = target_date.weekday()
 
         txt = await create_msg(config, dayIdx=day_idx, targetDate=target_date, checkSaturday=True)
         await msg.answer(txt, parse_mode="HTML", disable_web_page_preview=True)
-
-    except ValueError:
-        if current_state == Mode.waiting_date:
-            await state.set_state(Mode.main)
-            await msg.answer("Неправильний формат дати. Використовуйте РРРР.ММ.ДД або ММ.ДД")
+    elif current_state == Mode.waiting_date:
+        await state.set_state(Mode.main)
+        await msg.answer("Неправильний формат дати. Використовуйте РРРР.ММ.ДД, ММ.ДД або ДД")
 
 
 
