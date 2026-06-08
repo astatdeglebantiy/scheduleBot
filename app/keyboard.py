@@ -44,33 +44,36 @@ def _chunk(items: list, size: int) -> list[list]:
 
 
 
-def getNextLessonInlineKb(alertEnabled: bool = True) -> Any:
-    alertStatus = "увімк" if alertEnabled else "вимк"
-    return {
-        "inline_keyboard": [
-            [
-                {
-                    "text": f"Повітряна тривога | {alertStatus}",
-                    "callback_data": "alert_toggle",
-                    "style": "success" if alertEnabled else "danger",
-                }
-            ],
-            [
-                {
-                    "text": "Наступна пара",
-                    "callback_data": "next_lesson",
-                    "style": "primary",
-                }
-            ],
-            [
-                {
-                    "text": "Розклад по даті",
-                    "callback_data": "schedule_by_date",
-                    "style": "danger",
-                }
-            ],
-        ]
-    }
+def getNextLessonInlineKb(alertEnabled: bool = True, isGroup: bool = False) -> Any:
+    buttons = []
+
+    if not isGroup:
+        alertStatus = "увімк" if alertEnabled else "вимк"
+        buttons.append([
+            {
+                "text": f"Повітряна тривога | {alertStatus}",
+                "callback_data": "alert_toggle",
+                "style": "success" if alertEnabled else "danger",
+            }
+        ])
+
+    buttons.append([
+        {
+            "text": "Наступна пара",
+            "callback_data": "next_lesson",
+            "style": "primary",
+        }
+    ])
+
+    buttons.append([
+        {
+            "text": "Розклад по даті",
+            "callback_data": "schedule_by_date",
+            "style": "danger",
+        }
+    ])
+
+    return {"inline_keyboard": buttons}
 
 
 
@@ -144,14 +147,17 @@ def get_keyboard(config, viewing_week: int) -> Any:
 
 
 
-def get_stat_pagination_kb(current_page: int, total_pages: int) -> Any:
+def get_stat_pagination_kb(current_page: int, total_pages: int, mode: str = "users") -> Any:
     buttons = []
     if current_page > 0:
-        buttons.append({"text": "<", "callback_data": f"stat_page_{current_page - 1}"})
-    
+        buttons.append({"text": "<", "callback_data": f"stat_{mode}_{current_page - 1}"})
+
     buttons.append({"text": f"{current_page + 1}/{total_pages}", "callback_data": "noop"})
-    
+
     if current_page < total_pages - 1:
-        buttons.append({"text": ">", "callback_data": f"stat_page_{current_page + 1}"})
-        
-    return {"inline_keyboard": [buttons]}
+        buttons.append({"text": ">", "callback_data": f"stat_{mode}_{current_page + 1}"})
+
+    switch_button_text = "Групи" if mode == "users" else "Користувачі"
+    switch_callback = "stat_switch_groups" if mode == "users" else "stat_switch_users"
+
+    return {"inline_keyboard": [buttons, [{"text": switch_button_text, "callback_data": switch_callback}]]}

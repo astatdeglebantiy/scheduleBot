@@ -44,6 +44,12 @@ def get_total_users():
         return 0
 
 
+def get_total_groups():
+    try:
+        res = sb.table("groups").select("*", count="exact", head=True).execute()
+        return res.count
+    except Exception:
+        return 0
 
 
 def get_users_page(page: int, page_size: int = 40):
@@ -56,12 +62,32 @@ def get_users_page(page: int, page_size: int = 40):
         return []
 
 
+def get_groups_page(page: int, page_size: int = 40):
+    start = page * page_size
+    end = start + page_size - 1
+    try:
+        res = sb.table("groups").select("*").order("last_active", desc=True).range(start, end).execute()
+        return res.data
+    except Exception:
+        return []
+
+
 
 
 
 def get_user_by_id(user_id: int):
     try:
         res = sb.table("users").select("*").eq("user_id", user_id).execute()
+        if res.data:
+            return res.data[0]
+        return None
+    except Exception:
+        return None
+
+
+def get_group_by_id(chat_id: int):
+    try:
+        res = sb.table("groups").select("*").eq("chat_id", chat_id).execute()
         if res.data:
             return res.data[0]
         return None

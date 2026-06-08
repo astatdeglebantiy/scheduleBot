@@ -211,7 +211,7 @@ async def alertMonitorTask(bot: Bot, config):
             except Exception as e:
                 logging.error(f"Failed to send alert to {userId}: {e}")
 
-        group_message = message + "\n\n<b>Група:</b> введіть /off або /on для вимкнення/вмикнення сповіщень"
+        group_message = message + "\n\nВведіть /off або /on для вимкнення/увімкнення сповіщень в групі."
         for chat_id in groups:
             try:
                 chat = await bot.get_chat(chat_id)
@@ -271,8 +271,6 @@ async def alertMonitorTask(bot: Bot, config):
             currentRevision = getattr(config, "revision", 0)
             if currentRevision != lastConfigRevision:
                 lastConfigRevision = currentRevision
-                missedLessons.clear()
-                alertStartedOutsideSchedule = False
 
             if not withinSchedule:
                 await asyncio.sleep(config.alert_check_interval)
@@ -297,20 +295,31 @@ async def alertMonitorTask(bot: Bot, config):
                     startHour, startMinute = map(int, startTimeStr.split(':'))
                     lessonStart = time(startHour, startMinute)
 
+                    todaySchedule = getTodaySchedule(config)
+                    lessonObj = todaySchedule[lessonIdx] if todaySchedule and lessonIdx < len(todaySchedule) else None
+                    lessonLink = lessonObj.link if lessonObj and hasattr(lessonObj, 'link') else None
+
                     safeLessonName = html.escape(str(lessonName or ""))
                     safeStartTime = html.escape(str(startTime or ""))
                     safeEndTime = html.escape(str(endTime or ""))
+                    safeLessonLink = html.escape(str(lessonLink or ""), quote=True)
 
                     if currentTime < lessonStart:
-                        message = f"<b>ПОВІТРЯНА ТРИВОГА!</b>\n\nСкоро почнеться пара <b>{safeLessonName}</b>\nЧас: {safeStartTime} – {safeEndTime}"
+                        if lessonLink:
+                            message = f"<b>ПОВІТРЯНА ТРИВОГА!</b>\n\nСкоро почнеться пара <a href='{safeLessonLink}'>{safeLessonName}</a>\nЧас: {safeStartTime} – {safeEndTime}"
+                        else:
+                            message = f"<b>ПОВІТРЯНА ТРИВОГА!</b>\n\nСкоро почнеться пара <b>{safeLessonName}</b>\nЧас: {safeStartTime} – {safeEndTime}"
                     else:
-                        message = f"<b>ПОВІТРЯНА ТРИВОГА!</b>\n\nПари <b>{safeLessonName}</b> поки не буде\nЧас: {safeStartTime} – {safeEndTime}"
+                        if lessonLink:
+                            message = f"<b>ПОВІТРЯНА ТРИВОГА!</b>\n\nПари <a href='{safeLessonLink}'>{safeLessonName}</a> поки не буде\nЧас: {safeStartTime} – {safeEndTime}"
+                        else:
+                            message = f"<b>ПОВІТРЯНА ТРИВОГА!</b>\n\nПари <b>{safeLessonName}</b> поки не буде\nЧас: {safeStartTime} – {safeEndTime}"
                         missedLessons.clear()
                         missedLessons[lessonIdx] = lessonName
                 else:
                     message = "<b>ПОВІТРЯНА ТРИВОГА!</b>"
 
-                user_cnt, group_cnt = await _send_alert_broadcast(message)
+                user_cnt, group_cnt = await _send_alert_broadcast(message, disable_preview=True)
                 logging.info(f"Alert sent to {user_cnt} users and {group_cnt} groups")
             
             elif currentAlert and alertStartedOutsideSchedule and currentLesson:
@@ -337,17 +346,22 @@ async def alertMonitorTask(bot: Bot, config):
                 warningKey = f"{lessonIdx}_warning"
                 
                 if 0 < lessonStartMinutes - currentMinutes <= 10 and warningKey not in missedLessons:
+                    todaySchedule = getTodaySchedule(config)
+                    lessonObj = todaySchedule[lessonIdx] if todaySchedule and lessonIdx < len(todaySchedule) else None
+                    lessonLink = lessonObj.link if lessonObj and hasattr(lessonObj, 'link') else None
+
                     safeLessonName = html.escape(str(lessonName or ""))
                     safeStartTime = html.escape(str(startTime or ""))
                     safeEndTime = html.escape(str(endTime or ""))
-                    startedEarlier = lastAlertStartedAt and (now_dt - lastAlertStartedAt).total_seconds() > 600
-                    if startedEarlier:
-                        message = f"<b>Тривога продовжується</b>\n\nТривога почалась раніше\n\n<b>Через 10 хв починається пара</b>\n\n<b>{safeLessonName}</b>\nЧас: {safeStartTime} – {safeEndTime}"
+                    safeLessonLink = html.escape(str(lessonLink or ""), quote=True)
+
+                    if lessonLink:
+                        message = f"<b>Тривога продовжується</b>\n\n<b>Скоро почнеться пара</b>\n\n<a href='{safeLessonLink}'>{safeLessonName}</a>\nЧас: {safeStartTime} – {safeEndTime}"
                     else:
                         message = f"<b>Тривога продовжується</b>\n\n<b>Скоро почнеться пара</b>\n\n<b>{safeLessonName}</b>\nЧас: {safeStartTime} – {safeEndTime}"
                     missedLessons[warningKey] = True
 
-                    user_cnt, group_cnt = await _send_alert_broadcast(message)
+                    user_cnt, group_cnt = await _send_alert_broadcast(message, disable_preview=True)
                     logging.info(f"Lesson warning sent to {user_cnt} users and {group_cnt} groups")
 
 
@@ -372,7 +386,7 @@ async def alertMonitorTask(bot: Bot, config):
 
                     missedLessons[lessonIdx] = lessonName
 
-                    user_cnt, group_cnt = await _send_alert_broadcast(message)
+                    user_cnt, group_cnt = await _send_alert_broadcast(message, disable_preview=True)
                     logging.info(f"Lesson start sent to {user_cnt} users and {group_cnt} groups")
             
             elif currentAlert and prevAlertState and currentLesson and not alertStartedOutsideSchedule:
@@ -403,17 +417,22 @@ async def alertMonitorTask(bot: Bot, config):
                 warningKey = f"{lessonIdx}_warning"
                 
                 if currentMinutes < lessonStartMinutes and 0 < lessonStartMinutes - currentMinutes <= 10 and warningKey not in missedLessons:
+                    todaySchedule = getTodaySchedule(config)
+                    lessonObj = todaySchedule[lessonIdx] if todaySchedule and lessonIdx < len(todaySchedule) else None
+                    lessonLink = lessonObj.link if lessonObj and hasattr(lessonObj, 'link') else None
+
                     safeLessonName = html.escape(str(lessonName or ""))
                     safeStartTime = html.escape(str(startTime or ""))
                     safeEndTime = html.escape(str(endTime or ""))
-                    startedEarlier = lastAlertStartedAt and (now_dt - lastAlertStartedAt).total_seconds() > 600
-                    if startedEarlier:
-                        message = f"<b>Тривога продовжується</b>\n\nТривога почалась раніше\n\n<b>Через 10 хв починається пара</b>\n\n<b>{safeLessonName}</b>\nЧас: {safeStartTime} – {safeEndTime}"
+                    safeLessonLink = html.escape(str(lessonLink or ""), quote=True)
+
+                    if lessonLink:
+                        message = f"<b>Тривога продовжується</b>\n\n<b>Скоро почнеться пара</b>\n\n<a href='{safeLessonLink}'>{safeLessonName}</a>\nЧас: {safeStartTime} – {safeEndTime}"
                     else:
                         message = f"<b>Тривога продовжується</b>\n\n<b>Скоро почнеться пара</b>\n\n<b>{safeLessonName}</b>\nЧас: {safeStartTime} – {safeEndTime}"
                     missedLessons[warningKey] = True
 
-                    user_cnt, group_cnt = await _send_alert_broadcast(message)
+                    user_cnt, group_cnt = await _send_alert_broadcast(message, disable_preview=True)
                     logging.info(f"Lesson warning sent to {user_cnt} users and {group_cnt} groups")
                 
                 if lessonIdx not in missedLessons and lessonStart <= currentTime <= lessonEnd:
@@ -433,7 +452,7 @@ async def alertMonitorTask(bot: Bot, config):
 
                     missedLessons[lessonIdx] = lessonName
 
-                    user_cnt, group_cnt = await _send_alert_broadcast(message)
+                    user_cnt, group_cnt = await _send_alert_broadcast(message, disable_preview=True)
                     logging.info(f"Alert continuation sent to {user_cnt} users and {group_cnt} groups")
             
 

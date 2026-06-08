@@ -9,6 +9,10 @@ async def create_msg(config: Config, dayIdx: int, targetDate: datetime = None, w
     headerWithWeek = None
     headerNoWeek = None
 
+    show_audience = True
+    if config.settings.offline_days is not None:
+        show_audience = (dayIdx + 1) in config.settings.offline_days
+
     if isSaturday:
         satData = config.getNextSaturday()
         if not satData:
@@ -79,7 +83,7 @@ async def create_msg(config: Config, dayIdx: int, targetDate: datetime = None, w
             link = subjectObj.link
             name = subjectObj.name
             audience = subjectObj.audience if hasattr(subjectObj, 'audience') else None
-            audience_text = f" <i>авд.{audience}</i>" if audience else ""
+            audience_text = f" <i>авд.{audience}</i>" if (audience and show_audience) else ""
             row = f"<b>{i + 1}. [{lessonTime}] <a href='{html.escape(str(link or ''), quote=True)}'>{html.escape(str(name or ''))}</a></b>{audience_text}"
             lessonRows.append(row)
 
