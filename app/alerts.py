@@ -126,7 +126,7 @@ class AlertManager:
         try:
             kb = getAlertToggleKb(True) if include_kb else None
             await send_message(
-                self.bot, user_id, message, "HTML",
+                self.bot, user_id, message,
                 disable_web_page_preview=disable_preview, reply_markup=kb
             )
         except Exception as e:
@@ -136,7 +136,7 @@ class AlertManager:
         group_message = f"{message}\n\nВведіть /off або /on для вимкнення/увімкнення сповіщень в групі."
         try:
             await send_message(
-                self.bot, group_id, group_message, "HTML",
+                self.bot, group_id, group_message,
                 disable_web_page_preview=disable_preview
             )
         except Exception as e:
