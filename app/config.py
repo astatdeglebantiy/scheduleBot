@@ -37,6 +37,7 @@ class ConfigSchema(BaseModel):
     time: List[str]
     admins: List[int]
     academic_context: AcademicContext
+    offline_days: Optional[List[int]] = None
 
 
     app_version: str = "0.0.0"
