@@ -3,3 +3,4 @@ aiogram
 pytz
 PyYAML
 pydantic
+aiohttp
