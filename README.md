@@ -15,7 +15,7 @@ A feature-rich Telegram bot designed to help students and faculty manage their a
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/scheduleBot.git
+   git clone https://github.com/astatdeglebantiy/scheduleBot.git
    ```
 2. Create and activate a virtual environment:
    ```bash
